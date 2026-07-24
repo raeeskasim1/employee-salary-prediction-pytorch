@@ -1,0 +1,33 @@
+Project:
+Employee Salary Classification
+
+Dataset Shape
+(10000, 7)
+
+Target:
+HighSalary
+
+Remove:
+Salary
+
+Rows:
+10000
+
+Features:
+5
+
+Numeric:
+4 ['Age', 'Experience', 'Education', 'Hours']
+
+Categorical:
+1 ['Department']
+
+Missing Values:
+None
+
+Target Distribution:
+64/36
+
+Preprocessing:
+StandardScaler
+OneHotEncoder
