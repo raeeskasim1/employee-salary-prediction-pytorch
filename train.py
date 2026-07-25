@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from preprocess import load_and_preprocess_data
 from dataset import create_dataloaders
 from model import EmployeeClassifier
+from utils import save_checkpoint
 
 CSV_PATH = "data/employees.csv"
 BEST_MODEL_PATH = "models/best_model.pth"
@@ -124,14 +125,14 @@ for epoch in range(start_epoch,epochs):
     scheduler.step(val_loss)
 
     #checkpoint
-    torch.save({
-        "epoch":epoch,
-        "model_state_dict":model.state_dict(),
-        "optimizer_state_dict":optimizer.state_dict(),
-        "scheduler_state_dict":scheduler.state_dict(),
-        "best_val_loss":best_val_loss,
-        "early_stop_counter":early_stop_counter,
-        },CHECKPOINT_PATH)
+    save_checkpoint(
+        model,
+        optimizer,
+        scheduler,
+        epoch,
+        best_val_loss,
+        CHECKPOINT_PATH,
+    )
     print(f"Checkpoint saved at Epoch {epoch+1}")
 
     #current lr
