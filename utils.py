@@ -1,6 +1,26 @@
 import random
 import numpy as np
 import torch
+import joblib
+
+def save_preprocessor(
+    preprocessor,
+    preprocessor_path,
+):
+    joblib.dump(
+        preprocessor,
+        preprocessor_path,
+    )
+
+
+def load_preprocessor(
+    preprocessor_path,
+):
+    preprocessor = joblib.load(
+        preprocessor_path,
+    )
+
+    return preprocessor
 
 
 def save_checkpoint(
