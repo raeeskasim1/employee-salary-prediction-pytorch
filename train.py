@@ -54,6 +54,8 @@ scheduler=ReduceLROnPlateau(
 
 epochs=100
 best_val_loss = float("inf")
+early_stop_counter = 0
+early_stopping_patience = 10
 for epoch in range(epochs):
     model.train()
     train_loss=0
@@ -78,9 +80,27 @@ for epoch in range(epochs):
             prediction=model(batch_x)
             loss=loss_fn(prediction,batch_y)
             val_loss+=loss.item()
+    # avg val loss
     val_loss/=len(val_loader)
+    #update lr
     scheduler.step(val_loss)
 
+    #save best model and handle ealry stopping
+    if val_loss < best_val_loss:
+
+        best_val_loss=val_loss
+        early_stop_counter=0
+
+        torch.save(
+            model.state_dict(),
+            "models/best_model.pth"
+        )
+        print(f"Best model saved at Epoch {epoch+1} (Val Loss: {val_loss:.4f})")
+
+    else:
+        early_stop_counter+=1
+
+    #current lr
     current_lr=optimizer.param_groups[0]['lr']
 
     print(
@@ -90,12 +110,9 @@ for epoch in range(epochs):
         f"LR: {current_lr}" 
     ) 
 
-    if val_loss < best_val_loss:
-        best_val_loss=val_loss
+    #stop training if there is no improvemnt
+    if early_stop_counter >= early_stopping_patience:
+        print("early stopping triggered")
+        break
 
-        torch.save(
-            model.state_dict(),
-            "models/best_model.pth"
-        )
-
-    print("best model saved")
+    
