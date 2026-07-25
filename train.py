@@ -35,8 +35,6 @@ input_size=xtrain.shape[1]
 model=EmployeeClassifier(input_size)
 model.to(device)
 
-device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
 
 loss_fn=nn.BCELoss()
 
