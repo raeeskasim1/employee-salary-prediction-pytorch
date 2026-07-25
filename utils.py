@@ -65,3 +65,8 @@ def save_best_model(
         model.state_dict(),
         best_model_path,
     )
+
+def load_best_model(model,best_model_path,device):
+    model.load_state_dict(
+    torch.load(best_model_path, map_location=device)
+)
