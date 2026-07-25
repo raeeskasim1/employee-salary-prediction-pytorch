@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from preprocess import load_and_preprocess_data
 from dataset import create_dataloaders
 from model import EmployeeClassifier
+
 
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -43,6 +45,13 @@ optimizer=optim.Adam(
     lr=0.001
 )
 
+scheduler=ReduceLROnPlateau(
+    optimizer,
+    mode='min',
+    factor=0.1,
+    patience=5
+)
+
 epochs=100
 best_val_loss = float("inf")
 for epoch in range(epochs):
@@ -70,11 +79,15 @@ for epoch in range(epochs):
             loss=loss_fn(prediction,batch_y)
             val_loss+=loss.item()
     val_loss/=len(val_loader)
+    scheduler.step(val_loss)
+
+    current_lr=optimizer.param_groups[0]['lr']
 
     print(
         f"Epoch {epoch+1}/{epochs} | "
         f"Train Loss: {train_loss:.4f} | "
-        f"Val Loss: {val_loss:.4f}"
+        f"Val Loss: {val_loss:.4f} | "
+        f"LR: {current_lr}" 
     ) 
 
     if val_loss < best_val_loss:
