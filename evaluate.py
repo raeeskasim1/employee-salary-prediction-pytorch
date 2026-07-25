@@ -1,5 +1,13 @@
 import torch
 import torch.nn as nn
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+)
+
 
 from preprocess import load_and_preprocess_data
 from dataset import create_dataloaders
@@ -45,8 +53,10 @@ model.eval()
 loss_fn = nn.BCELoss()
 
 test_loss = 0
-correct = 0
-total = 0
+# correct = 0
+# total = 0
+all_predictions=[]
+all_labels=[]
 
 with torch.no_grad():
     for batch_x,batch_y in test_loader:
@@ -57,10 +67,38 @@ with torch.no_grad():
         test_loss+=loss.item()
 
         predicted=(prediction >= 0.5).float()
-        correct+=(predicted == batch_y).sum().item()
-        total+=batch_y.size(0)
+        # correct+=(predicted == batch_y).sum().item()
+        # total+=batch_y.size(0)
+
+        all_predictions.extend(predicted.cpu().numpy().flatten())
+        all_labels.extend(batch_y.cpu().numpy().flatten())
+
 test_loss/=len(test_loader)
-accuracy=correct / total   
+# accuracy=correct / total 
+accuracy = accuracy_score(
+    all_labels,
+    all_predictions,
+)
+
+precision = precision_score(
+    all_labels,
+    all_predictions,
+)
+
+recall = recall_score(
+    all_labels,
+    all_predictions,
+)
+
+f1 = f1_score(
+    all_labels,
+    all_predictions,
+)
+
+conf_matrix = confusion_matrix(
+    all_labels,
+    all_predictions,
+)  
 
 print(f"Test Loss: {test_loss:.4f}")
 print(f"Accuracy: {accuracy:.4%}")
