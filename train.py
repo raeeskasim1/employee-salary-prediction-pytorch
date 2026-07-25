@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from preprocess import load_and_preprocess_data
 from dataset import create_dataloaders
 from model import EmployeeClassifier
-from utils import save_checkpoint
+from utils import save_checkpoint, load_checkpoint
 
 CSV_PATH = "data/employees.csv"
 BEST_MODEL_PATH = "models/best_model.pth"
@@ -62,17 +62,32 @@ early_stop_counter = 0
 best_val_loss = float("inf")
 if os.path.exists(CHECKPOINT_PATH):
 
-    checkpoint=torch.load(CHECKPOINT_PATH,map_location=device)
-
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
-
-    best_val_loss=checkpoint["best_val_loss"]
-    start_epoch=checkpoint["epoch"]+1
-    early_stop_counter=checkpoint["early_stop_counter"]
+    (
+        last_epoch,
+        best_val_loss,
+        early_stop_counter,
+    ) =load_checkpoint(
+        model,
+        optimizer,
+        scheduler,
+        CHECKPOINT_PATH,
+        device,
+    )
+    start_epoch = last_epoch + 1
 
     print(f"Resuming from Epoch {start_epoch}")
+
+    # checkpoint=torch.load(CHECKPOINT_PATH,map_location=device)
+
+    # model.load_state_dict(checkpoint["model_state_dict"])
+    # optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    # scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+
+    # best_val_loss=checkpoint["best_val_loss"]
+    # start_epoch=checkpoint["epoch"]+1
+    # early_stop_counter=checkpoint["early_stop_counter"]
+
+    # print(f"Resuming from Epoch {start_epoch}")
 
 
 
@@ -131,6 +146,7 @@ for epoch in range(start_epoch,epochs):
         scheduler,
         epoch,
         best_val_loss,
+        early_stop_counter,
         CHECKPOINT_PATH,
     )
     print(f"Checkpoint saved at Epoch {epoch+1}")
