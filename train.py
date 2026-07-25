@@ -6,6 +6,9 @@ from preprocess import load_and_preprocess_data
 from dataset import create_dataloaders
 from model import EmployeeClassifier
 
+device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 (
     xtrain,
     xval,
@@ -30,6 +33,10 @@ train_loader, val_loader, test_loader = create_dataloaders(
 #create model
 input_size=xtrain.shape[1]
 model=EmployeeClassifier(input_size)
+model.to(device)
+
+device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 
 loss_fn=nn.BCELoss()
 
@@ -44,10 +51,12 @@ for epoch in range(epochs):
     model.train()
     train_loss=0
     for batch_x,batch_y in train_loader:
+        batch_x=batch_x.to(device)
+        batch_y=batch_y.to(device)
         prediction=model(batch_x)
         loss=loss_fn(prediction,batch_y)
         optimizer.zero_grad()
-        loss.bacward()
+        loss.backward()
         optimizer.step()
         train_loss+=loss.item()
     train_loss/=len(train_loader)
@@ -57,6 +66,8 @@ for epoch in range(epochs):
     val_loss=0
     with torch.no_grad():
         for batch_x,batch_y in val_loader:
+            batch_x=batch_x.to(device)
+            batch_y=batch_y.to(device)
             prediction=model(batch_x)
             loss=loss_fn(prediction,batch_y)
             val_loss+=loss.item()
