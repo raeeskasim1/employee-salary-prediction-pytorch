@@ -4,14 +4,21 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from preprocess import load_and_preprocess_data
-from dataset import create_dataloaders
+
+from dataset import create_dataloader
 from model import EmployeeClassifier
+from preprocess import (
+    load_data,
+    create_preprocessor,
+    transform_data,
+    save_preprocessor,
+)
 from utils import save_checkpoint, load_checkpoint, save_best_model
 
 CSV_PATH = "data/employees.csv"
 BEST_MODEL_PATH = "models/best_model.pth"
 CHECKPOINT_PATH = "models/checkpoint.pth"
+PREPROCESSOR_PATH = "models/preprocessor.pkl"
 
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,18 +30,35 @@ device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ytrain,
     yval,
     ytest,
+) = load_data(CSV_PATH)
+
+preprocessor = create_preprocessor()
+
+xtrain = preprocessor.fit_transform(xtrain)
+
+save_preprocessor(
     preprocessor,
-) = load_and_preprocess_data(CSV_PATH)
+    PREPROCESSOR_PATH,
+)
 
-
-#create dataloaders
-train_loader, val_loader, test_loader = create_dataloaders(
-    xtrain,
+xval = transform_data(
+    preprocessor,
     xval,
-    xtest,
+)
+
+
+train_loader = create_dataloader(
+    xtrain,
     ytrain,
+    batch_size=32,
+    shuffle=True,
+)
+
+val_loader = create_dataloader(
+    xval,
     yval,
-    ytest,
+    batch_size=32,
+    shuffle=False,
 )
 
 #create model
@@ -77,19 +101,6 @@ if os.path.exists(CHECKPOINT_PATH):
 
     print(f"Resuming from Epoch {start_epoch}")
 
-    # checkpoint=torch.load(CHECKPOINT_PATH,map_location=device)
-
-    # model.load_state_dict(checkpoint["model_state_dict"])
-    # optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    # scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
-
-    # best_val_loss=checkpoint["best_val_loss"]
-    # start_epoch=checkpoint["epoch"]+1
-    # early_stop_counter=checkpoint["early_stop_counter"]
-
-    # print(f"Resuming from Epoch {start_epoch}")
-
-
 
 epochs=100
 early_stopping_patience = 10
@@ -126,10 +137,6 @@ for epoch in range(start_epoch,epochs):
         best_val_loss=val_loss
         early_stop_counter=0
 
-        # torch.save(
-        #     model.state_dict(),
-        #     BEST_MODEL_PATH
-        # )
         save_best_model(
             model,
             BEST_MODEL_PATH,

@@ -9,12 +9,19 @@ from sklearn.metrics import (
 )
 
 
-from preprocess import load_and_preprocess_data
-from dataset import create_dataloaders
+from preprocess import (
+    load_data,
+    load_preprocessor,
+    transform_data,
+)
+
+from dataset import create_dataloader
 from model import EmployeeClassifier
+from utils import load_best_model
 
 CSV_PATH = "data/employees.csv"
 BEST_MODEL_PATH = "models/best_model.pth"
+PREPROCESSOR_PATH = "models/preprocessor.pkl"
 
 device=torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,34 +34,36 @@ device=torch.device(
     ytrain,
     yval,
     ytest,
-    preprocessor,
-) = load_and_preprocess_data(CSV_PATH)
+) = load_data(CSV_PATH)
 
-train_loader, val_loader, test_loader = create_dataloaders(
-    xtrain,
-    xval,
-    xtest,
-    ytrain,
-    yval,
-    ytest,
+preprocessor = load_preprocessor(
+    PREPROCESSOR_PATH,
 )
 
-input_size = xtrain.shape[1]
+xtest = transform_data(
+    preprocessor,
+    xtest,
+)
+
+test_loader = create_dataloader(
+    xtest,
+    ytest,
+    batch_size=32,
+    shuffle=False,
+)
+
+input_size = xtest.shape[1]
 
 model = EmployeeClassifier(input_size)
 model.to(device)
 
-model.load_state_dict(
-    torch.load(BEST_MODEL_PATH, map_location=device)
-)
+load_best_model(model,BEST_MODEL_PATH,device)
 
 model.eval()
 
 loss_fn = nn.BCELoss()
 
 test_loss = 0
-# correct = 0
-# total = 0
 all_predictions=[]
 all_labels=[]
 
@@ -67,14 +76,11 @@ with torch.no_grad():
         test_loss+=loss.item()
 
         predicted=(prediction >= 0.5).float()
-        # correct+=(predicted == batch_y).sum().item()
-        # total+=batch_y.size(0)
 
         all_predictions.extend(predicted.cpu().numpy().flatten())
         all_labels.extend(batch_y.cpu().numpy().flatten())
 
 test_loss/=len(test_loader)
-# accuracy=correct / total 
 accuracy = accuracy_score(
     all_labels,
     all_predictions,
@@ -100,5 +106,11 @@ conf_matrix = confusion_matrix(
     all_predictions,
 )  
 
-print(f"Test Loss: {test_loss:.4f}")
-print(f"Accuracy: {accuracy:.4%}")
+print(f"Test Loss : {test_loss:.4f}")
+print(f"Accuracy  : {accuracy:.4%}")
+print(f"Precision : {precision:.4%}")
+print(f"Recall    : {recall:.4%}")
+print(f"F1 Score  : {f1:.4%}")
+
+print("\nConfusion Matrix")
+print(conf_matrix)

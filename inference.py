@@ -1,52 +1,57 @@
 import torch
 import pandas as pd
 
-from preprocess import load_and_preprocess_data
 from model import EmployeeClassifier
+from utils import load_best_model
+from preprocess import (
+    load_preprocessor,
+    transform_data,
+)
 
 CSV_PATH = "data/employees.csv"
 BEST_MODEL_PATH = "models/best_model.pth"
+PREPROCESSOR_PATH = "models/preprocessor.pkl"
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
-(
-    xtrain,
-    xval,
-    xtest,
-    ytrain,
-    yval,
-    ytest,
-    preprocessor,
-) = load_and_preprocess_data(CSV_PATH)
+preprocessor = load_preprocessor(
+    PREPROCESSOR_PATH,
+)
+
+# new_employee = pd.DataFrame({
+#     "Age": [26],
+#     "Experience": [0],
+#     "Education": [18],
+#     "Hours": [45],
+#     "Department": ["IT"]
+# })
 
 new_employee = pd.DataFrame({
-    "Age": [26],
-    "Experience": [0],
+    "Age": [45],
+    "Experience": [20],
     "Education": [18],
-    "Hours": [45],
-    "Department": ["IT"]
+    "Hours": [50],
+    "Department": ["Management"]
 })
 
-new_employee=preprocessor.transform(new_employee)
+new_employee = transform_data(
+    preprocessor,
+    new_employee,
+)
 
 new_employee = torch.tensor(
     new_employee,
     dtype=torch.float32
 ).to(device)
 
-input_size = xtrain.shape[1]
+input_size = new_employee.shape[1]
 
 model = EmployeeClassifier(input_size)
 model.to(device)
 
-model.load_state_dict(
-    torch.load(
-        BEST_MODEL_PATH,
-        map_location=device
-    )
-)
+load_best_model(model,BEST_MODEL_PATH,device)
 
 model.eval()
 

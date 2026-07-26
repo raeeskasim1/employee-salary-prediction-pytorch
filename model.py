@@ -20,4 +20,3 @@ class EmployeeClassifier(nn.Module):
         return self.model(x)
 
 
-print(EmployeeClassifier(input_size=8))
