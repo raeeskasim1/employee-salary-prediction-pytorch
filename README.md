@@ -32,6 +32,9 @@ The project follows a clean and modular architecture with separate components fo
 ```text
 employee/
 │
+├── assets/
+│   └── (images/screenshots/plots)
+│
 ├── data/
 │   └── employees.csv
 │
@@ -181,18 +184,27 @@ The model is evaluated using:
 Example results:
 
 ```text
-Test Loss : 0.0778
-Accuracy  : 96.40%
-Precision : 96.88%
-Recall    : 97.49%
-F1 Score  : 97.18%
+Test Loss : 0.0780
+Accuracy  : 96.5333%
+Precision : 96.6942%
+Recall    : 97.9079%
+F1 Score  : 97.2973%
 
 Confusion Matrix
-[[514  30]
- [ 24 932]]
+[[512  32]
+ [ 20 936]]
 ```
 
 ---
+
+# Training Visualization
+
+Training curves and evaluation visualizations are available in the `assets/` folder.
+
+Examples:
+- Training and validation loss curves
+- Model performance metrics  
+- Confusion matrix visualization  
 
 ## Inference
 
