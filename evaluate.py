@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
     f1_score,
     confusion_matrix,
+    ConfusionMatrixDisplay
 )
 
 
@@ -114,3 +116,18 @@ print(f"F1 Score  : {f1:.4%}")
 
 print("\nConfusion Matrix")
 print(conf_matrix)
+
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=conf_matrix,
+    display_labels=["Low Salary", "High Salary"]
+)
+
+disp.plot(cmap="Blues")
+
+plt.title("Confusion Matrix")
+plt.savefig(
+    "assets/confusion_matrix.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+plt.close()

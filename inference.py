@@ -29,10 +29,10 @@ preprocessor = load_preprocessor(
 # })
 
 new_employee = pd.DataFrame({
-    "Age": [45],
-    "Experience": [20],
-    "Education": [18],
-    "Hours": [50],
+    "Age": [30],
+    "Experience": [7],
+    "Education": [16],
+    "Hours": [25],
     "Department": ["Management"]
 })
 

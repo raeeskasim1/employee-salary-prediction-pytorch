@@ -1,8 +1,10 @@
 import os
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 
 from dataset import create_dataloader
@@ -101,9 +103,12 @@ if os.path.exists(CHECKPOINT_PATH):
 
     print(f"Resuming from Epoch {start_epoch}")
 
-
+train_losses = []
+val_losses = []
+val_accuracies = []
 epochs=100
 early_stopping_patience = 10
+best_val_accuracy = 0.0
 for epoch in range(start_epoch,epochs):
     model.train()
     train_loss=0
@@ -121,6 +126,8 @@ for epoch in range(start_epoch,epochs):
     #---------validation--------
     model.eval()
     val_loss=0
+    correct=0
+    total=0
     with torch.no_grad():
         for batch_x,batch_y in val_loader:
             batch_x=batch_x.to(device)
@@ -128,13 +135,24 @@ for epoch in range(start_epoch,epochs):
             prediction=model(batch_x)
             loss=loss_fn(prediction,batch_y)
             val_loss+=loss.item()
+
+            predicted=(prediction >= 0.5).float()
+            correct+=(predicted==batch_y).sum().item()
+            total+=batch_y.size(0)
+
     # avg val loss
     val_loss/=len(val_loader)
+
+    val_accuracy=100 * correct / total
+    train_losses.append(train_loss)
+    val_losses.append(val_loss)
+    val_accuracies.append(val_accuracy)
 
     #save best model and handle ealry stopping
     if val_loss < best_val_loss:
 
         best_val_loss=val_loss
+        best_val_accuracy = val_accuracy
         early_stop_counter=0
 
         save_best_model(
@@ -169,12 +187,65 @@ for epoch in range(start_epoch,epochs):
         f"Epoch {epoch+1}/{epochs} | "
         f"Train Loss: {train_loss:.4f} | "
         f"Val Loss: {val_loss:.4f} | "
+        f"Val Acc: {val_accuracy:.2f}% | "
         f"LR: {current_lr:.6f}" 
     ) 
 
+
     #stop training if there is no improvemnt
     if early_stop_counter >= early_stopping_patience:
-        print("early stopping triggered")
+        print(f"Early stopping triggered at Epoch {epoch + 1}")
         break
 
+print("\n" + "=" * 50)
+print("Training Complete")
+print("=" * 50)
+print(f"Best Validation Loss : {best_val_loss:.4f}")
+print(f"Best Validation Accuracy : {best_val_accuracy:.2f}%")
+print("Best model saved successfully.")
+print("=" * 50)
+
+
+
+# ------------------------
+# Training Loss Plot
+# ------------------------
+
+plt.figure(figsize=(8,5))
+
+epochs = range(1, len(train_losses) + 1)
+plt.plot(epochs, train_losses, label="Train Loss")
+plt.plot(epochs, val_losses, label="Validation Loss")
+
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Training vs Validation Loss")
+
+plt.legend()
+plt.grid(True)
+
+plt.savefig("assets/training_curve.png", dpi=300, bbox_inches="tight")
+
+plt.close()
+
+
+# ------------------------
+# Validation Accuracy Plot
+# ------------------------
+
+plt.figure(figsize=(8,5))
+
+epochs = range(1, len(val_accuracies) + 1)
+
+plt.plot(epochs, val_accuracies)
+
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy (%)")
+plt.title("Validation Accuracy")
+
+plt.grid(True)
+
+plt.savefig("assets/accuracy_curve.png", dpi=300, bbox_inches="tight")
+
+plt.close()
     
